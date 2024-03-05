@@ -9,7 +9,7 @@ error Transact__INVALID_BURN_AMT();
 error Transact__INVALID_SWAP_AMT();
 
 contract Transact is ERC20, Ownable {
-    mapping(address => uint256) public addressToAmtDeposited
+    mapping(address => uint256) public addressToAmtDeposited;
 
     // Exchange rates (1 token = exchangeRate usdc, 1 token = exchangeRate usdt)
     uint256 public exchangeRate = 100;
@@ -18,20 +18,20 @@ contract Transact is ERC20, Ownable {
     address public usdtToken;
 
 
-    event deposit(
+    event deposited(
         address indexed depositor,
         uint256 indexed amountDeposited
-    )
+    );
 
-    event burn(
-        address indexed burner;
-        uint256 amountBurnt;
-    )
+    event burnt(
+        address indexed burner,
+        uint256 amountBurnt
+    );
 
-    event swap(
-        address indexed swapper;
-        uint256 amountSwapped;
-    )
+    event swapped(
+        address indexed swapper,
+        uint256 amountSwapped
+    );
     
 
     constructor(
@@ -47,7 +47,7 @@ contract Transact is ERC20, Ownable {
     function deposit(uint256 usdcAmount, uint256 ethAmount, uint256 arbAmount) external {
         // We're going to assume 1 usdc, eth and arb can mint 1 token
         if(usdcAmount <= 0 && ethAmount <= 0 && arbAmount <= 0){
-            revert Transact__INSUFFICIENT_FUNDS()
+            revert Transact__INSUFFICIENT_FUNDS();
         }
 
         uint256 totalDepositAmount = usdcAmount + ethAmount + arbAmount;
@@ -57,7 +57,7 @@ contract Transact is ERC20, Ownable {
 
         // Update deposited amounts for the user
         addressToAmtDeposited[msg.sender] += totalDepositAmount;
-        emit deposit(msg.sender, totalDepositAmount)
+        emit deposited(msg.sender, totalDepositAmount);
 
         // These conditionals allow transfer of either eth,usdc or arb from the depositor to the contract depending on which was deposited
         if (usdcAmount > 0) {
@@ -83,8 +83,8 @@ contract Transact is ERC20, Ownable {
         _burn(msg.sender, amount);
 
         // Update deposited amounts for the user
-        depositedAmounts[msg.sender] -= amount;
-        emit burn(msg.sender, amount)
+        addressToAmtDeposited[msg.sender] -= amount;
+        emit burnt(msg.sender, amount);
     }
 
     function swap(uint256 amount, bool forUSDC) external {
@@ -104,7 +104,7 @@ contract Transact is ERC20, Ownable {
 
         // Update deposited amounts for the user
         addressToAmtDeposited[msg.sender] -= amount;
-        emit swap(msg.sender, equivalentAmount)
+        emit swapped(msg.sender, equivalentAmount);
     }
 
     function updateExchangeRate(uint256 newRate) external onlyOwner {
